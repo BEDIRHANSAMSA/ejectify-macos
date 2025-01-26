@@ -23,6 +23,7 @@ class ExternalVolume {
     let disk: DADisk
     let id: String
     let name: String
+    let url: URL
     
     private static var userDefaultsKeyPrefixVolume = "volume."
     var enabled: Bool {
@@ -35,10 +36,11 @@ class ExternalVolume {
         }
     }
     
-    init(disk: DADisk, id: String, name: String) {
+    init(disk: DADisk, id: String, name: String, url: URL) {
         self.disk = disk
         self.id = id
         self.name = name
+        self.url = url
     }
     
     func unmount(force: Bool = false) {
@@ -85,10 +87,10 @@ class ExternalVolume {
             return nil
         }
         
-        return ExternalVolume.fromDisk(disk: disk)
+        return ExternalVolume.fromDisk(disk: disk, url: url)
     }
     
-    static func fromDisk(disk: DADisk) -> ExternalVolume? {
+    static func fromDisk(disk: DADisk, url: URL? = nil) -> ExternalVolume? {
         guard let diskInfo = DADiskCopyDescription(disk) as? [NSString: Any] else {
             return nil
         }
@@ -120,6 +122,24 @@ class ExternalVolume {
             return nil
         }
         
-        return ExternalVolume(disk: disk, id: id as String, name: name)
+        // URL'yi bul
+        guard let volumeURL = url ?? getVolumeURL(from: diskInfo) else {
+            return nil
+        }
+        
+        return ExternalVolume(disk: disk, id: id as String, name: name, url: volumeURL)
+    }
+    
+    private static func getVolumeURL(from diskInfo: [NSString: Any]) -> URL? {
+        guard let volumePath = diskInfo[kDADiskDescriptionVolumePathKey] as? URL else {
+            return nil
+        }
+        return volumePath
+    }
+}
+
+extension ExternalVolume: Equatable {
+    static func == (lhs: ExternalVolume, rhs: ExternalVolume) -> Bool {
+        return lhs.url == rhs.url
     }
 }

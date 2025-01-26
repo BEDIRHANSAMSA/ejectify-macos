@@ -10,11 +10,13 @@ import LaunchAtLogin
 
 class Preference {
     
-    enum UnmountWhen: String {
-        case screensaverStarted = "screensaverStarted"
-        case screenIsLocked = "screenIsLocked"
-        case screensStartedSleeping = "screensStartedSleeping"
-        case systemStartsSleeping = "systemStartsSleeping"
+    enum UnmountWhen: Int, CaseIterable {
+        case screensaverStarted = 0
+        case screenIsLocked = 1
+        case screensStartedSleeping = 2
+        case systemStartsSleeping = 3
+        
+        static var allOptions: [UnmountWhen] = [.screensaverStarted, .screenIsLocked, .screensStartedSleeping, .systemStartsSleeping]
     }
     
     static var launchAtLogin: Bool {
@@ -26,18 +28,14 @@ class Preference {
         }
     }
     
-    private static var userDefaultsKeyUnmountWhen = "preference.unmountWhen"
-    static var unmountWhen: UnmountWhen {
+    private static var userDefaultsKeyUnmountWhen = "preference.unmountWhenOptions"
+    static var unmountWhenOptions: Set<Int> {
         get {
-            if let rawValue = UserDefaults.standard.string(forKey: userDefaultsKeyUnmountWhen) {
-                if let value = UnmountWhen(rawValue: rawValue) {
-                    return value
-                }
-            }
-            return .systemStartsSleeping // Default
+            let array = UserDefaults.standard.array(forKey: userDefaultsKeyUnmountWhen) as? [Int] ?? []
+            return Set(array)
         }
         set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: userDefaultsKeyUnmountWhen)
+            UserDefaults.standard.set(Array(newValue), forKey: userDefaultsKeyUnmountWhen)
             UserDefaults.standard.synchronize()
             AppDelegate.shared.activityController?.startMonitoring()
         }
